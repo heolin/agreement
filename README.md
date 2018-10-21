@@ -7,7 +7,10 @@ Implementation of popular agreement coefficients used for categorical measuremen
 - Scott's pi
 
 ### Extended Formulas
-All implementations are using extended formulas, which allows using multiple raters, multiple categories, and missing data.
+All implementations are using extended formulas, which allows using:
+- multiple raters
+- multiple categories
+- missing data
 
 ### Based on
 All implementations were based on https://github.com/jmgirard/mReliability/
