@@ -13,6 +13,6 @@ All implementations are using extended formulas, which allows using:
 - missing data
 
 ### Based on
-All implementations were based on https://github.com/jmgirard/mReliability/
+All implementations were based on formulas available on https://github.com/jmgirard/mReliability/
 
 
