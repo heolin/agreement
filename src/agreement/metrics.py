@@ -1,30 +1,32 @@
 import numpy as np
 from agreement.utils.kernels import (
-    identity_kernel, get_weights
+    identity_kernel, compute_weights
 )
 
 
-def observed_agreement(df, weights_kernel=identity_kernel):
-    N, q = df.shape
-    n = df.sum(axis=1)
+def _compute_observed_agreement(answers_matrix, weights_kernel=identity_kernel):
+    N, q = answers_matrix.shape
+    n = answers_matrix.sum(axis=1)
 
-    w = get_weights(q, weights_kernel)
+    w = compute_weights(q, weights_kernel)
 
-    r_star = df.dot(w)
+    r_star = answers_matrix.dot(w)
 
-    po = ((df * (r_star-1)).sum(axis=1) / (n * (n-1))).sum()/N
+    po = np.average((answers_matrix * (r_star-1)).sum(axis=1) / (n * (n-1)))
+    return po, w
+
+
+def observed_agreement(answers_matrix, weights_kernel=identity_kernel):
+    answers_matrix = answers_matrix[answers_matrix.sum(axis=1) > 1]
+    po, _ = _compute_observed_agreement(answers_matrix, weights_kernel)
     return po
 
 
-def s_score(df, weights_kernel=identity_kernel):
-    N, q = df.shape
-    n = df.sum(axis=1)
+def s_score(answers_matrix, weights_kernel=identity_kernel):
+    answers_matrix = answers_matrix[answers_matrix.sum(axis=1) > 1]
+    N, q = answers_matrix.shape
 
-    w = get_weights(q, weights_kernel)
-
-    r_star = df.dot(w)
-
-    po = ((df * (r_star-1)).sum(axis=1) / (n * (n-1))).sum()/N
+    po, w = _compute_observed_agreement(answers_matrix, weights_kernel)
 
     pc = w.sum() / q**2
 
@@ -32,88 +34,80 @@ def s_score(df, weights_kernel=identity_kernel):
     return S
 
 
-def cohens_kappa(df, dfa, weights_kernel=identity_kernel):
-    N, q = df.shape
-    n = df.sum(axis=1)
+def cohens_kappa(answers_matrix, users_matrix, weights_kernel=identity_kernel):
+    answers_matrix = answers_matrix[answers_matrix.sum(axis=1) > 1]
 
-    w = get_weights(q, weights_kernel)
+    N, q = answers_matrix.shape
 
-    r_star = df.dot(w)
+    po, w = _compute_observed_agreement(answers_matrix, weights_kernel)
 
-    po = ((df * (r_star-1)).sum(axis=1) / (n * (n-1))).sum() / N
+    p = users_matrix / users_matrix.sum(axis=1, keepdims=True)
 
-    p = dfa.div(dfa.sum(axis=1), axis=0)
     r, q = p.shape
 
     pbar = p.sum(axis=0) / r
 
-    rpbar = r * np.array(pbar).reshape(1, q).T * np.array(pbar).reshape(1, q)
-    pg = np.array(p).T.dot(np.array(p))
+    rpbar = r * pbar.reshape(1, q).T * pbar.reshape(1, q)
+    pg = p.T.dot(p)
     s2 = (pg - rpbar) / (r - 1)
 
-    pbarplus = np.array(pbar).reshape(1, q).T * np.array(pbar).reshape(1, q)
+    pbarplus = pbar.reshape(1, q).T * pbar.reshape(1, q)
     pc = (w * (pbarplus - s2/r)).sum()
 
     k = (po - pc) / (1 - pc)
     return k
 
 
-def gwets_gamma(df, weights_kernel=identity_kernel):
-    N, q = df.shape
-    n = df.sum(axis=1)
+def gwets_gamma(answers_matrix, weights_kernel=identity_kernel):
+    N, q = answers_matrix.shape
 
-    w = get_weights(q, weights_kernel)
-
-    r_star = df.dot(w)
-
-    po = ((df * (r_star-1)).sum(axis=1) / (n * (n-1))).sum() / N
+    _answers_matrix = answers_matrix[answers_matrix.sum(axis=1) > 1]
+    po, w = _compute_observed_agreement(_answers_matrix, weights_kernel)
 
     Tw = w.sum()
 
-    pi = df.div(df.sum(axis=1), axis=0).sum() / N
+    pi = np.average(answers_matrix / answers_matrix.sum(axis=1, keepdims=True), axis=0)
 
-    pc = (pi*(1 - pi)).values.sum() * Tw / (q*(q-1))
+    pc = (pi*(1 - pi)).sum() * Tw / (q*(q-1))
 
     gamma = (po - pc) / (1 - pc)
     return gamma
 
 
-def krippendorffs_alpha(df, weights_kernel=identity_kernel):
-    N, q = df.shape
-    n = df.sum(axis=1)
 
-    w = get_weights(q, weights_kernel)
+def krippendorffs_alpha(answers_matrix, weights_kernel=identity_kernel):
+    _answers_matrix = answers_matrix[answers_matrix.sum(axis=1) > 1]
 
-    r_star = df.dot(w)
+    N, q = _answers_matrix.shape
+    n = _answers_matrix.sum(axis=1)
 
-    po2 = ((df * (r_star-1)).sum(axis=1) / (n * (n-1))).sum()/N
+    w = compute_weights(q, weights_kernel)
 
-    rdash = df.sum(axis=1).sum() / N
+    r_star = _answers_matrix.dot(w)
 
-    epsilon = 1 / (N*rdash)
-    po = po2 * (1-epsilon) + epsilon
+    rdash = _answers_matrix.sum(axis=1).sum() / N
+    epsilon = 1 / (N * rdash)
 
-    pi = df.div(df.sum(axis=1), axis=0).sum() / N
+    po2 = (_answers_matrix * (r_star-1) / (rdash * (n - 1))[:,np.newaxis]).sum(axis=1).mean()
 
-    pc = (w * np.array(pi).reshape(1, q).T * np.array(pi).reshape(1, q)).sum()
+    po = po2 * (1 - epsilon) + epsilon
+
+    pc = ((_answers_matrix.mean(axis=0) / rdash)**2).sum()
 
     alpha = (po - pc) / (1 - pc)
     return alpha
 
 
-def scotts_pi(df, weights_kernel=identity_kernel):
-    N, q = df.shape
-    n = df.sum(axis=1)
+def scotts_pi(answers_matrix, weights_kernel=identity_kernel):
+    answers_matrix = answers_matrix[answers_matrix.sum(axis=1) > 1]
+    N, q = answers_matrix.shape
 
-    w = get_weights(q, weights_kernel)
+    po, w = _compute_observed_agreement(answers_matrix, weights_kernel)
 
-    r_star = df.dot(w)
+    pik = np.mean(answers_matrix / answers_matrix.sum(axis=1, keepdims=True), axis=0)
 
-    po = ((df * (r_star-1)).sum(axis=1) / (n * (n-1))).sum() / N
-
-    pik = df.div(df.sum(axis=1), axis=0).sum() / N
-
-    pc = (w * np.array(pik).reshape(1, q).T * np.array(pik).reshape(1, q)).sum()
+    pc = (w * pik.reshape(1, q).T * pik.reshape(1, q)).sum()
 
     pi = (po - pc) / (1 - pc)
     return pi
+

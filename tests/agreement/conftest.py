@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+from agreement.utils.transform import pivot_table_frequency
 
 
 @pytest.fixture
@@ -8,6 +9,8 @@ def dataset_gwet():
     Rating data from 4 raters and 12 subjects.
 
     This dataset comes from Handbook of Inter-Rater ReLiability, Kilem Li. Gwet, 2014, p. 120
+
+    Columns description:
     """
     return np.array([
         [1, 1, 'a'],
@@ -55,18 +58,34 @@ def dataset_gwet():
 
 
 @pytest.fixture
+def dataset_gwet_transformed(dataset_gwet):
+    dataset = dataset_gwet
+    questions_answers_table = pivot_table_frequency(dataset[:, 0], dataset[:, 2])
+    users_answers_table = pivot_table_frequency(dataset[:, 1], dataset[:, 2])
+    return questions_answers_table, users_answers_table
+
+
+@pytest.fixture
 def dataset_unused_values():
     return np.array([
-        [0,  3,  1],
-        [0,  3,  2],
-        [1,  3,  1],
-        [1,  3,  2],
-        [2,  3,  1],
-        [2,  3,  2],
-        [3,  2,  1],
-        [3,  3,  2],
-        [4,  2,  1],
+        [0,  1,  3],
+        [0,  2,  3],
+        [1,  1,  3],
+        [1,  2,  3],
+        [2,  1,  3],
+        [2,  2,  3],
+        [3,  1,  2],
+        [3,  2,  3],
+        [4,  1,  2],
         [4,  2,  2],
-        [5,  3,  1],
-        [5,  3,  2]
+        [5,  1,  3],
+        [5,  2,  3]
     ])
+
+
+@pytest.fixture
+def dataset_unused_values_transformed(dataset_unused_values):
+    dataset = dataset_unused_values
+    questions_answers_table = pivot_table_frequency(dataset[:, 0], dataset[:, 2])
+    users_answers_table = pivot_table_frequency(dataset[:, 1], dataset[:, 2])
+    return questions_answers_table, users_answers_table
