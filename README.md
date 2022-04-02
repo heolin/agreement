@@ -105,10 +105,10 @@ The last step is to chose the metric you want to compute and run following code:
 ```python
 from agreement.metrics import cohens_kappa, krippendorffs_alpha
 
-kappa = cohens_kappa(questions_answers_table)
-weighted_kappa = cohens_kappa(questions_answers_table, weights_kernel=linear_kernel)
+kappa = cohens_kappa(questions_answers_table, users_answers_table)
+weighted_kappa = cohens_kappa(questions_answers_table, users_answers_table, weights_kernel=linear_kernel)
 
-alpha = krippendorffs_alpha(questions_answers_table, users_answers_table)
+alpha = krippendorffs_alpha(questions_answers_table)
 ```
 
 For more detailed example see: TODO
