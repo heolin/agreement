@@ -6,6 +6,7 @@ from agreement.metrics import (
     krippendorffs_alpha,
     scotts_pi
 )
+from agreement.utils.kernels import quadratic_kernel
 
 
 def test_observed_agreement(dataset_gwet_transformed):
@@ -36,6 +37,13 @@ def test_krippendorffs_alpha(dataset_gwet_transformed):
     questions_answers_table, _ = dataset_gwet_transformed
     a = krippendorffs_alpha(questions_answers_table)
     assert round(a, 4) == 0.7434
+
+
+def test_krippendorffs_alpha_quadratic(dataset_gwet_transformed):
+    # Expected value from the `krippendorff` package (0.8.2), level_of_measurement="interval".
+    questions_answers_table, _ = dataset_gwet_transformed
+    a = krippendorffs_alpha(questions_answers_table, weights_kernel=quadratic_kernel)
+    assert round(a, 4) == 0.8491
 
 
 def test_scotts_pi(dataset_gwet_transformed):

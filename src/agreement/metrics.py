@@ -92,7 +92,8 @@ def krippendorffs_alpha(answers_matrix, weights_kernel=identity_kernel):
 
     po = po2 * (1 - epsilon) + epsilon
 
-    pc = ((_answers_matrix.mean(axis=0) / rdash)**2).sum()
+    pi = _answers_matrix.mean(axis=0) / rdash
+    pc = pi @ w @ pi
 
     alpha = (po - pc) / (1 - pc)
     return alpha
